@@ -21,7 +21,7 @@ The project is set to classify emotions via image processing.
 <br />
 <br />
 
--<b> Creating eigen matrixces using PCA </b>
+-<b> Creating eigen matrix using PCA </b>
 <br />
 
 <br />
