@@ -1,1 +1,59 @@
-Face Tracker 
+import cv2 as cv
+import numpy as np
+import pandas
+from google.colab import drive
+from google.colab.patches import cv2_imshow
+drive.mount('/content/drive')
+drive_path = '/content/drive/MyDrive/DIP_final_work/' # TODO - UPDATE ME WITH THE TRUE PATH!
+
+
+def lightened_img(img,mult):
+  rows = np.shape(img)[0]
+  cols = np.shape(img)[1]
+  for row in range(rows):
+    for col in range(cols):
+      if img[row,col]*mult<1:
+        img[row,col] = img[row,col]*mult*255
+      else:
+        img[row,col] = 255
+  light_img = img.astype(np.uint8)
+  return light_img
+
+
+cap= cv.VideoCapture(drive_path + 'light_change_vid.MOV')
+if not cap.isOpened():
+    print("Error: Could not open video.")
+face_cascade = cv.CascadeClassifier(drive_path + 'haarcascade_frontalface_alt.xml')
+while True:
+  ret, frame = cap.read() #gets a single frame, ret tells us if it was read correctly
+  if not ret:   #breaks out of the loop if the frame wasnt loaded correctly (end of stream)
+    print('end of video or an error has occured')
+    break
+# the viola-jones algorithm
+  frame = cv.resize(frame,(100,200))
+  grayscale_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+  rescaled_img = grayscale_image/255
+  avg_gray = np.mean(rescaled_img)
+  mult = 0.5/avg_gray
+  if avg_gray <0.1:
+    grayscale_image = lightened_img(rescaled_img,mult)
+  elif avg_gray < 0.2:
+    grayscale_image = lightened_img(rescaled_img,mult)
+  elif avg_gray < 0.3:
+    grayscale_image = lightened_img(rescaled_img,mult)
+  elif avg_gray < 0.4:
+    grayscale_image = lightened_img(rescaled_img,mult)
+  detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=4)
+  #print(detected_faces)
+  faces = []
+  for (column, row, width, height) in detected_faces:
+      #cv.rectangle(frame,(column, row),
+       #   (column + width, row + height),(0, 0, 0),2 )
+      face = grayscale_image[row:row+height,column:column + width]
+      face = cv.resize(face,(48,48))
+      faces.append(face)
+
+  for face in faces:
+    cv2_imshow(face)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
