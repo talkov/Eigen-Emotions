@@ -29,7 +29,7 @@ def face_detection(frame):
         print('--(!)Error loading face cascade')
         exit(0)
     # the viola-jones algorithm
-    frame = cv.resize(frame, (360, 200))
+    #frame = cv.resize(frame, (360, 200))
     grayscale_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     grayscale_image = cv.equalizeHist(grayscale_image)
     rescaled_img = grayscale_image / 255
@@ -52,27 +52,13 @@ def face_detection(frame):
             if len(detected_faces) == 0:
                 print('empty')    # print(detected_faces)
     face = None
+    all_faces = []
     for (column, row, width, height) in detected_faces:
         # 0cv.rectangle(frame,(column, row),
         #   (column + width, row + height),(0, 0, 0),2 )
         face = grayscale_image[row:row + height, column:column + width]
         face = cv.resize(face, (48, 48))
-    return face
+        all_faces.append(face)
+    return all_faces,detected_faces
 
-#         # Display faces
-#   for (x, y, w, h) in detected_faces:
-#     cv.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-#     face = grayscale_image[y:y + h, x:x + w]
-#     face = cv.resize(face, (48, 48))
-#     cv.imshow('Face', face)
-#
-#     # Display the frame
-#   cv.imshow('Frame', frame)
-#
-#     # Break the loop if 'q' is pressed
-#   if cv.waitKey(1) & 0xFF == ord('q'):
-#     break
-#
-# # Release the capture
-# cap.release()
-# cv.destroyAllWindows()
+
