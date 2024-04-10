@@ -20,23 +20,27 @@ def lightened_img(img,mult): #sets the average of the pixels to be 0.5 (to make 
   return light_img
 
 
-cap= cv.VideoCapture(drive_path + 'video_2.MOV')
-if not cap.isOpened():
+cap= cv.VideoCapture(drive_path + 'video_2.MOV')#reads the video file
+if not cap.isOpened():#checks to see if the video was read correctly
     print("Error: Could not open video.")
 face_cascade = cv.CascadeClassifier(drive_path + ' haarcascade_frontalface_alt.xml')
+""" sets the viola-jones algorythm to face_cascades"""
+
 while True:
   ret, frame = cap.read() #gets a single frame, ret tells us if it was read correctly
   if not ret:   #breaks out of the loop if the frame wasnt loaded correctly (end of stream)
     print('end of video or an error has occured')
     break
 # the viola-jones algorithm
-  frame = cv.resize(frame,(360,200))
+  frame = cv.resize(frame,(360,200))#resizing the frame for easier face-recognition with live cam
   grayscale_image = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-  rescaled_img = grayscale_image/255
+  rescaled_img = grayscale_image/255#sets the pixels between (0,1)
   avg_gray = np.mean(rescaled_img)
   mult = 0.5/avg_gray
-  grayscale_image = lightened_img(rescaled_img,mult)
-
+  grayscale_image = lightened_img(rescaled_img,mult)#balances the light in the frame 
+  """now we run the viola-jones algorythm to detect faces in the frame
+      using multiple options for the neighbors to avoid false positive and false negative
+      """
   detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=8)
   if len(detected_faces) == 0:
     detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=4)
@@ -54,11 +58,11 @@ while True:
        #   (column + width, row + height),(0, 0, 0),2 )
       face = grayscale_image[row:row+height,column:column + width]
       #cuts the rectangle of the detected face
-      face = cv.resize(face,(48,48))
-      face = cv.equalizeHist(face)
+      face = cv.resize(face,(48,48))#resizes the img to the right size
+      face = cv.equalizeHist(face)#equalizing histogram to avoid extreme light
       face_blur = 0.01*cv.GaussianBlur(face, (5, 5), 0)
       face_blur = face_blur.astype(np.uint8)
-      face -= face_blur
+      face -= face_blur#sharpen the img
       faces.append(face)
   
   for face in faces:
