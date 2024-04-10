@@ -1,7 +1,6 @@
 import cv2
 import torch
 import numpy as np
-from classifier import single_layer_softmax
 from face_tracker import face_detection
 import matplotlib.pyplot as plt
 from joblib import load
@@ -64,38 +63,33 @@ def main():
     weight_matrices = {}
     mean_matrices = {}
     weight_matrices['angry'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                       'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                       'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                        '/angry_matrix.npy')
     mean_matrices['angry'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                      '/angry_mean_matrix.npy')
     weight_matrices['happy'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                       'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                       'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                        '/happy_matrix.npy')
     mean_matrices['happy'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                      '/happy_mean_matrix.npy')
     weight_matrices['sad'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                      '/sad_matrix.npy')
     mean_matrices['sad'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                   'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                   'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                    '/sad_mean_matrix.npy')
     weight_matrices['surprised'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                           'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                           'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                            '/surprised_matrix.npy')
     mean_matrices['surprised'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                         'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                         'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked'
                                          '/surprised_mean_matrix.npy')
-
-    # Define paths
-    model_path = '/Users/omerhazan/Desktop/personal/studies/image ' \
-                 'processing/image_processing_project/trained_model/best_model_hist_eq_0.608.pth'
 
     # Load the trained model
     emotion_classifier = load_model('/Users/omerhazan/Desktop/personal/studies/image '
-                                    'processing/image_processing_project/PCA/trained_SVM_models/svm_model_0.5818'
-                                    '.joblib')
+                                    'processing/image_processing_project/PCA/trained_SVM_models/svm_model_0.5689.joblib')
 
     # Open video stream
     cap = cv2.VideoCapture(0)
@@ -108,42 +102,41 @@ def main():
         if not ret:
             break
         # todo: face detection code goes here
-        face = face_detection(frame)  # replace with face detection code
-        if face is None:
-            face = frame
-        # Preprocess the frame
-        vector = preprocess_frame(face, weight_matrices, mean_matrices)
-        if np.size(face) != 2304:
-            face = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert frame to grayscale
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # Perform prediction
-        predicted_label = emotion_classifier.predict(vector)
+        faces, detected_positions = face_detection(frame)  # replace with face detection code
+        if faces:
+            for i, face in enumerate(faces):
+                x, y, w, h = detected_positions[i]
+                # Replace "YourTextHere" with text from your dictionary
+                vector = preprocess_frame(face, weight_matrices, mean_matrices)
+                predicted_label = emotion_classifier.predict(vector)
+                vote_history.append(predicted_label)
+
+                # Keep only the last 20 predictions in the vote history
+                if len(vote_history) > 20:
+                    vote_history.pop(0)
+
+                # Count the occurrences of each label in the vote history
+                votes_count = [vote_history.count(label) for label in range(4)]
+
+                # Get the label with the highest count (majority vote)
+                majority_vote = np.argmax(votes_count)
+
+                # Map predicted label to actual class name
+                class_names = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'surprised'}
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 255), 2)
+                text = f"Prediction: {class_names[predicted_label[0]]}"
+                cv2.putText(frame, text, (x, y - 10), font, 0.5, (255, 0, 255), 1, cv2.LINE_AA)
+
 
         # Store prediction in vote history
-        vote_history.append(predicted_label)
 
-        # Keep only the last 20 predictions in the vote history
-        if len(vote_history) > 20:
-            vote_history.pop(0)
-
-        # Count the occurrences of each label in the vote history
-        votes_count = [vote_history.count(label) for label in range(4)]
-
-        # Get the label with the highest count (majority vote)
-        majority_vote = np.argmax(votes_count)
-
-        # Map predicted label to actual class name
-        class_names = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'surprised'}
 
         # Display the majority vote prediction
-        cv2.putText(frame, f"Prediction: {class_names[majority_vote]}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    (0, 255, 0), 2)
-        face = cv2.resize(face, (frame.shape[1], frame.shape[0]))
 
         # Concatenate frames horizontally
-        combined_frame = cv2.hconcat([frame, face])
 
-        cv2.imshow('Combined Streams', combined_frame)
+        cv2.imshow('guess emotion', frame)
 
         plt.show()
 
