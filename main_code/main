@@ -4,12 +4,14 @@ import numpy as np
 from classifier import single_layer_softmax
 from face_tracker import face_detection
 import matplotlib.pyplot as plt
+from joblib import load
+
 
 # Load the trained model
-def load_model(model_path, input_size, output_size):
-    model = single_layer_softmax(input_size, output_size)
-    model.load_state_dict(torch.load(model_path))
-    return model
+def load_model(model_path):
+    # Load the saved model
+    loaded_model = load(model_path)
+    return loaded_model
 
 
 # Preprocess input image
@@ -60,39 +62,40 @@ def predict(model, vector):
 # Main function
 def main():
     weight_matrices = {}
-    weight_matrices['angry'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                       'processing/image_processing_project/eigen_matrices/all_train_images'
-                                       '/angry_matrix_886.npy')
-    weight_matrices['happy'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                       'processing/image_processing_project/eigen_matrices/all_train_images'
-                                       '/happy_matrix_909.npy')
-    weight_matrices['sad'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/eigen_matrices/all_train_images'
-                                     '/sad_matrix_907.npy')
-    weight_matrices['surprised'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                           'processing/image_processing_project/eigen_matrices/all_train_images'
-                                           '/surprised_matrix_911.npy')
-
     mean_matrices = {}
+    weight_matrices['angry'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
+                                       'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                       '/angry_matrix.npy')
     mean_matrices['angry'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/eigen_matrices/all_train_images'
-                                     '/angry_mean_matrix_886.npy')
+                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     '/angry_mean_matrix.npy')
+    weight_matrices['happy'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
+                                       'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                       '/happy_matrix.npy')
     mean_matrices['happy'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                     'processing/image_processing_project/eigen_matrices/all_train_images'
-                                     '/happy_mean_matrix_909.npy')
+                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     '/happy_mean_matrix.npy')
+    weight_matrices['sad'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
+                                     'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                     '/sad_matrix.npy')
     mean_matrices['sad'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                   'processing/image_processing_project/eigen_matrices/all_train_images'
-                                   '/sad_mean_matrix_907.npy')
+                                   'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                   '/sad_mean_matrix.npy')
+    weight_matrices['surprised'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
+                                           'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                           '/surprised_matrix.npy')
     mean_matrices['surprised'] = np.load('/Users/omerhazan/Desktop/personal/studies/image '
-                                         'processing/image_processing_project/eigen_matrices/all_train_images'
-                                         '/surprised_mean_matrix_911.npy')
+                                         'processing/image_processing_project/PCA/eigen_matrices_hand_picked'
+                                         '/surprised_mean_matrix.npy')
 
     # Define paths
     model_path = '/Users/omerhazan/Desktop/personal/studies/image ' \
                  'processing/image_processing_project/trained_model/best_model_hist_eq_0.608.pth'
 
     # Load the trained model
-    model = load_model(model_path, input_size=3613, output_size=4)
+    emotion_classifier = load_model('/Users/omerhazan/Desktop/personal/studies/image '
+                                    'processing/image_processing_project/PCA/trained_SVM_models/svm_model_0.5818'
+                                    '.joblib')
 
     # Open video stream
     cap = cv2.VideoCapture(0)
@@ -114,7 +117,7 @@ def main():
             face = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # Convert frame to grayscale
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # Perform prediction
-        predicted_label = predict(model, vector)
+        predicted_label = emotion_classifier.predict(vector)
 
         # Store prediction in vote history
         vote_history.append(predicted_label)
