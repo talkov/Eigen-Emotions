@@ -3,9 +3,10 @@ import numpy as np
 import pandas
 from google.colab import drive
 from google.colab.patches import cv2_imshow
-drive.mount('/content/drive')
-drive_path = '/content/drive/MyDrive/DIP_final_work/' # TODO - UPDATE ME WITH THE TRUE PATH!
 
+
+drive.mount('/content/drive')
+drive_path = "/content/drive/MyDrive/DIP_Proj/"
 
 def lightened_img(img,mult): #sets the average of the pixels to be 0.5 (to make sure that the light is not extreme)
   rows = np.shape(img)[0]
@@ -19,13 +20,24 @@ def lightened_img(img,mult): #sets the average of the pixels to be 0.5 (to make 
   light_img = img.astype(np.uint8)
   return light_img
 
+def find_face(img,cascade):
+  detected_faces = cascade.detectMultiScale(img,minNeighbors=14)
+  if len(detected_faces) == 0:
+    detected_faces = cascade.detectMultiScale(img,minNeighbors=8)
+    if len(detected_faces) == 0:
+      detected_faces = cascade.detectMultiScale(img,minNeighbors=4)
+      if len(detected_faces) == 0:
+        detected_faces = cascade.detectMultiScale(img,minNeighbors=2)
+        if len(detected_faces) == 0:
+          print('empty')
+  return detected_faces
 
-cap= cv.VideoCapture(drive_path + 'video_2.MOV')#reads the video file
+cap= cv.VideoCapture(drive_path + 'video_3.MOV')#reads the video file
 if not cap.isOpened():#checks to see if the video was read correctly
     print("Error: Could not open video.")
-face_cascade = cv.CascadeClassifier(drive_path + ' haarcascade_frontalface_alt.xml')
+face_cascade = cv.CascadeClassifier(drive_path + 'haarcascade_frontalface_alt.xml')
 """ sets the viola-jones algorythm to face_cascades"""
-
+profile_cascade = cv.CascadeClassifier(drive_path + 'haarcascade_profileface.xml')
 while True:
   ret, frame = cap.read() #gets a single frame, ret tells us if it was read correctly
   if not ret:   #breaks out of the loop if the frame wasnt loaded correctly (end of stream)
@@ -41,6 +53,9 @@ while True:
   """now we run the viola-jones algorythm to detect faces in the frame
       using multiple options for the neighbors to avoid false positive and false negative
       """
+
+  detected_faces = find_face(grayscale_image,face_cascade)
+  """
   detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=8)
   if len(detected_faces) == 0:
     detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=4)
@@ -48,10 +63,18 @@ while True:
       detected_faces = face_cascade.detectMultiScale(grayscale_image,minNeighbors=2)
       if len(detected_faces) == 0:
         print('empty')
+    """
   """gets the rectangles of the detected faces, left upper corner and height
   and width of the rectangle. minNeighbors sets the amount of overlapping rectangles
   """
-  #print(detected_faces)
+  grayscale_flip = cv.flip(grayscale_image,1)
+  if len(detected_faces) == 0:
+    detected_faces = find_face(grayscale_image,profile_cascade)
+    if len(detected_faces) == 0:
+      detected_faces = find_face(grayscale_flip,profile_cascade)
+
+  
+  
   faces = []
   for (column, row, width, height) in detected_faces:
       #cv.rectangle(frame,(column, row),
