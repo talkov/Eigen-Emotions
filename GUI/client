@@ -3,7 +3,7 @@ import cv2
 from main import load_model, preprocess_frame, predict
 from joblib import load
 import numpy as np
-from face_tracker_tal import face_detection
+from face_tracker import face_detection
 
 
 
