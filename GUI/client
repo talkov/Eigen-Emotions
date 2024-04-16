@@ -1,0 +1,99 @@
+from flask import Flask, render_template, Response, jsonify
+import cv2
+from main import load_model, preprocess_frame, predict
+from joblib import load
+import numpy as np
+from face_tracker_tal import face_detection
+
+
+
+app = Flask(__name__)
+model_path = "/Users/omerhazan/Desktop/personal/studies/image " \
+             "processing/image_processing_project/PCA/trained_SVM_models/svm_model_0.5689.joblib"
+emotion_classifier = load(model_path)
+weight_matrices = {}
+mean_matrices = {}
+emotions = ["happy", "angry", "sad", "surprised"]
+for emotion in emotions:
+    mean_matrices[emotion] = np.load(
+        f'/Users/omerhazan/Desktop/personal/studies/image '
+        f'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked/{emotion}_mean_matrix.npy')
+    weight_matrices[emotion] = np.load(
+        f'/Users/omerhazan/Desktop/personal/studies/image '
+        f'processing/image_processing_project/PCA/eigen_matrices/eigen_matrices_hand_picked/{emotion}_matrix.npy')
+# frame = None
+# success = None
+@app.route('/')
+def index():
+    """Serve the main page."""
+    return render_template('index.html')
+
+@app.route('/video')
+def video():
+    """Route to video stream."""
+    return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+def generate_frames():
+    global frame,success
+    """Capture frame-by-frame from the camera and yield as response."""
+    cap2 = cv2.VideoCapture(0)  # Open default camera
+    while True:
+        success, frame2 = cap2.read()
+        if not success:
+            break
+        ret, buffer = cv2.imencode('.jpg', frame2)
+        frame2 = buffer.tobytes()
+        yield (b'--frame2\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame2 + b'\r\n')
+    cap2.release()
+
+
+
+
+    # Define the class names mapping
+class_names = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'surprised'}
+
+    # Define the route to get the prediction
+@app.route('/get_prediction')
+def get_prediction():
+
+    # Open video stream
+    cap = cv2.VideoCapture(0)
+
+    ret, frame = cap.read()  # Read frame from video stream
+    faces, detected_positions = face_detection(frame)
+    face_vote_history = {}
+
+    prediction = ''
+    if faces:
+        for i, face in enumerate(faces):
+            # Replace "YourTextHere" with text from your dictionary
+            vector = preprocess_frame(face, weight_matrices, mean_matrices)
+            predicted_label = emotion_classifier.predict(vector)
+
+            # Initialize or retrieve the vote history for this face
+            if i not in face_vote_history:
+                face_vote_history[i] = []
+
+            face_vote_history[i].append(predicted_label)
+
+            # Keep only the last 20 predictions in the vote history for this face
+            if len(face_vote_history[i]) > 20:
+                face_vote_history[i].pop(0)
+
+            # Count the occurrences of each label in the vote history for this face
+            votes_count = [face_vote_history[i].count(label) for label in range(4)]
+
+            # Get the label with the highest count (majority vote) for this face
+            majority_vote = np.argmax(votes_count)
+
+            # Map predicted label to actual class name
+            class_names = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'surprised'}
+
+        prediction = class_names[predicted_label[0]]
+    cap.release()
+    # Return the prediction as JSON
+    return jsonify({'prediction': prediction})
+
+if __name__ == '__main__':
+    app.run(debug=True, threaded=True, use_reloader=False)
