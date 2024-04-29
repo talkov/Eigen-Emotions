@@ -1,5 +1,5 @@
 # Eigen Emotions 
-Image proccesing project
+Image processing project
 
  <img src="https://github.com/talkov/eigen-emotions-/blob/main/logo.jpg" alt="Eigen Emotions logo">
 
