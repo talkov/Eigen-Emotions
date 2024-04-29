@@ -4,7 +4,7 @@ Image proccesing project
  <img src="https://github.com/talkov/eigen-emotions-/blob/main/logo.jpg" alt="Eigen Emotions logo">
 
 <h2>Description</h2>
-The project is set to classify emotions via image processing. 
+The project is set to classify emotions via image processing. Detailed summary in the pdf.
 
 
 
