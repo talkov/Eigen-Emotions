@@ -6,6 +6,13 @@ Eigen Emotions is a computer vision project that detects emotions from facial ex
 <img src="https://github.com/talkov/eigen-emotions-/blob/main/logo.jpg" alt="Eigen Emotions logo">
 ---
 
+## 🎥 Demo Video: Eigen Emotions in Action
+https://github.com/user-attachments/assets/c208798d-4ac6-409c-88fa-d3bcc0d3de05
+https://github.com/user-attachments/assets/c30e2ef0-c5a9-4106-b504-8a67c0e77311
+https://github.com/user-attachments/assets/080bc898-fdc2-4860-b49b-1229c9c018da
+
+
+
 ## 📖 Overview
 
 ### Key Features:
